@@ -8,26 +8,21 @@ import time
 log_set = Logger(name='SET_POSITION')
 log_get = Logger(name='GET_POSITION')
 log = Logger(name='OPERATOR')
-
-#CONNECT TO THE BROKER
 log.info("Creating channel...")
 channel = Channel("amqp://guest:guest@localhost:5672")
-
-
-#PUBLISH
-log.info("Creating TURN ON  message...")
 message = Message()
+subscription = Subscription(channel)
+
+
+log.info("Creating TURN ON  message...")
 message.body = "Ligar sistema".encode('latin1')
 
 
-#SUBSCRIBE
-subscription = Subscription(channel)
 subscription.subscribe(topic="Resposta.sistema")
 
 
 while True:
 	
-	#PUBLISH
 	log.info("Sending TURN ON  message...")
 	channel.publish(message, topic="Controle.console")
 	
@@ -49,7 +44,7 @@ while True:
 	requisicao = RequisicaoRobo()
 	subscription = Subscription(channel)
 	
-	#PRIMEIRA REQUISICAO
+	#1° REQUEST
 	log.info("Getting a ramdomized ID")
 	requisicao.id = int(input("Enter your robot id "))
 	log.info(f"Robot ID: {requisicao.id}")
@@ -72,7 +67,7 @@ while True:
 	except socket.timeout:
 	    print('No reply :(')
 
-	#SEGUNDA REQUISICAO
+	#2° REQUEST
 	requisicao.function = "SET POSITION"
 	requisicao.positions.x = randint(-2,5)
 	requisicao.positions.y = randint(-2,5)
@@ -96,7 +91,7 @@ while True:
 	    print('No reply :(')
 	    
 	    
-	#TERCEIRA REQUISIÇÃO
+	#3° REQUEST
 	log.info("Getting a ramdomized ID")
 	log.info(f"Robot ID: {requisicao.id}")
 	requisicao.function = "GET POSITION"

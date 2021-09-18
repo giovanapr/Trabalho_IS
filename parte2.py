@@ -11,13 +11,8 @@ import socket
 log = Logger(name = "CONSOLE")
 log_set = Logger(name = 'SET_POSITION')
 log_get = Logger(name = 'OPERATOR')
-
-#CONNECT TO THE BROKER
 log.info("Creating channel...")
 channel = Channel("amqp://guest:guest@localhost:5672")
-
-
-#SUBSCRIBE
 subscription = Subscription(channel)
 subscription.subscribe(topic="Controle.console")
 	
@@ -26,13 +21,10 @@ log.info("Waiting TURN ON message...")
 while True:
 	rand = randint(0,1)
 	
-	#Receive message
 	message = channel.consume()
 	
-	#Simulate connection
 	log.info("Message received. Checking content and trying to bring the system online...")
 	
-	#PUBLISH
 	if rand == 1:
 		log.info("SYSTEM ONLINE...")
 		message = Message()
@@ -108,7 +100,7 @@ def send_message(requisicaorobo, ctx):
     			print('No reply :(')
     			
     		
-	#return Status(StatusCode.OUT_OF_RANGE, "Invalid Request")
+	return Status(StatusCode.OUT_OF_RANGE, "Invalid Request")
 	
 channel = Channel("amqp://guest:guest@localhost:5672")
 provider = ServiceProvider(channel)
