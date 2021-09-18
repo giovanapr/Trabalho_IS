@@ -20,40 +20,33 @@ channel = Channel("amqp://guest:guest@localhost:5672")
 #SUBSCRIBE
 subscription = Subscription(channel)
 subscription.subscribe(topic="Controle.console")
-
-#SIMULATE CONNECTION
-def simulator():
-	x = randint(1,10)
-	if x%2 == 0:
-		return 1
-	else:
-		return 0
-		
-b=0
+	
 log.info("Waiting TURN ON message...")
 
-while b == 0:
+while True:
+	rand = randint(0,1)
+	
 	#Receive message
 	message = channel.consume()
 	
 	#Simulate connection
 	log.info("Message received. Checking content and trying to bring the system online...")
-	a = simulator()
 	
 	#PUBLISH
-	if a == 1:
+	if rand == 1:
 		log.info("SYSTEM ONLINE...")
 		message = Message()
 		message.body = "Sistema Ligado".encode('latin1')
 		log.info("Seding notification to OPERATOR...")
 		channel.publish(message, topic="Resposta.sistema")
-		b = 1
+		break
 	else:
 		log.warn("Failed to bring the system online.")
 		message = Message()
 		message.body = "Sistema nao foi Ligado".encode('latin1')
 		log.info("Seding notification to OPERATOR...")
 		channel.publish(message, topic="Resposta.sistema")
+	time.sleep(2)
 
 log.info("Creating the RPC Server and waiting requests...")
 
@@ -82,7 +75,6 @@ def send_message(requisicaorobo, ctx):
 		log.info("Waiting SET POSITION reply from ROBOT CONTROLLER...")
 		try:
 			reply = channel.consume(timeout=1.0)
-			print(reply)
 			log.info(f"SET POSITION reply {reply.status.code}")
 			log_set.info(f'{reply.status.code}')
 			return reply.status
