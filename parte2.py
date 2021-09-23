@@ -68,7 +68,6 @@ def send_message(requisicaorobo, ctx):
 		try:
 			reply = channel.consume(timeout=1.0)
 			log.info(f"SET POSITION reply {reply.status.code}")
-			log_set.info(f'{reply.status.code}')
 			return reply.status
     
 		except socket.timeout:

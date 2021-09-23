@@ -66,6 +66,7 @@ while True:
     
 	except socket.timeout:
 	    print('No reply :(')
+	    
 
 	#2° REQUEST
 	requisicao.function = "SET POSITION"
