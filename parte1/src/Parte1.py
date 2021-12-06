@@ -5,29 +5,36 @@ from random import randint
 import socket
 import time
 
-log_set = Logger(name='SET_POSITION')
-log_get = Logger(name='GET_POSITION')
-log = Logger(name='OPERATOR')
-log.info("Creating channel...")
-channel = Channel("amqp://guest:guest@localhost:5672")
-message = Message()
-subscription = Subscription(channel)
 
+log = Logger(name='OPERATOR')
+
+log.info("Creating channel...")
+
+channel_resposta = Channel("amqp://guest:guest@localhost:5672")
+channel_requisicao = Channel("amqp://guest:guest@localhost:5672")
+
+subscription_resposta = Subscription(channel_resposta)
+subscription_requisicao = Subscription(channel_requisicao)
+
+subscription_resposta.subscribe(topic="Resposta.sistema")
 
 log.info("Creating TURN ON  message...")
+
+message = Message()
 message.body = "Ligar sistema".encode('latin1')
 
-
-subscription.subscribe(topic="Resposta.sistema")
+time.sleep(1)
 
 
 while True:
 	
 	log.info("Sending TURN ON  message...")
-	channel.publish(message, topic="Controle.console")
+
+	channel_resposta.publish(message, topic="Controle.console")
 	
 	log.info("Waiting reply...")
-	message2 = channel.consume()
+	
+	message2 = channel_resposta.consume()
 	
 	if message2.body.decode('latin1') == "Sistema Ligado":
 		log.info("SYSTEM ONLINE...")
@@ -37,81 +44,78 @@ while True:
 	time.sleep(1)
 
 
+time.sleep(1)
 
 
 while True:
-
 	requisicao = RequisicaoRobo()
-	subscription = Subscription(channel)
 	
 	#1° REQUEST
 	log.info("Getting a ramdomized ID")
-	requisicao.id = int(input("Enter your robot id "))
+
+	requisicao.id = randint(1,5)
+
 	log.info(f"Robot ID: {requisicao.id}")
+
 	requisicao.function = "GET POSITION"
 
 	log.info("Creating GET POSITION request...")
-	message2 = Message(content = requisicao, reply_to = subscription)
 
-	channel.publish(message2, topic="Requisicao.Robo")
+	message2 = Message(content = requisicao, reply_to = subscription_requisicao)
+	channel_requisicao.publish(message2, topic="Requisicao.Robo")
+
 	log.info("Sending GET POSITION request...")
-
 	log.info("Waiting GET POSITION reply...")
 	
 	try:
-	    reply = channel.consume(timeout=1.0)
-	    log.info("GET POSITION reply:") 
+	    reply = channel_requisicao.consume(timeout=1.0)
+	    log.info("GET POSITION reply:")
 	    log.info(f'{reply.status.why}')
 	    time.sleep(1)
     
 	except socket.timeout:
 	    print('No reply :(')
-	    
 
 	#2° REQUEST
 	requisicao.function = "SET POSITION"
 	requisicao.positions.x = randint(-2,5)
 	requisicao.positions.y = randint(-2,5)
+
 	log.info(f"Creating SET POSITION request with x:{requisicao.positions.x} y:{requisicao.positions.y}")
 
-	subscription = Subscription(channel)
+	message2 = Message(content = requisicao, reply_to = subscription_requisicao)
+	channel_requisicao.publish(message2, topic="Requisicao.Robo")
 
-	message2 = Message(content = requisicao, reply_to = subscription)
-
-	channel.publish(message2, topic="Requisicao.Robo")
 	log.info("Sending SET POSITION request...")
-
 	log.info("Waiting SET POSITION reply...")
+
 	try:
-	    reply = channel.consume(timeout=1.0) 
+	    reply = channel_requisicao.consume(timeout=1.0)
 	    log.info(f'SET POSITION reply: {reply.status.code}')
 	    time.sleep(1)
 
-	    
 	except socket.timeout:
 	    print('No reply :(')
-	    
 	    
 	#3° REQUEST
 	log.info("Getting a ramdomized ID")
 	log.info(f"Robot ID: {requisicao.id}")
+
 	requisicao.function = "GET POSITION"
 
 	log.info("Creating GET POSITION request...")
-	message2 = Message(content = requisicao, reply_to = subscription)
 
-	channel.publish(message2, topic="Requisicao.Robo")
+	message2 = Message(content = requisicao, reply_to = subscription_requisicao)
+	channel_requisicao.publish(message2, topic="Requisicao.Robo")
+
 	log.info("Sending GET POSITION request...")
-
 	log.info("Waiting GET POSITION reply...")
 	
 	try:
-	    reply = channel.consume(timeout=1.0)
+	    reply = channel_requisicao.consume(timeout=1.0)
 	    log.info("GET POSITION reply:") 
 	    log.info(f'{reply.status.why}')
 	    time.sleep(1)
     
 	except socket.timeout:
 	    print('No reply :(')
-
-
